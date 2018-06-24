@@ -1,5 +1,6 @@
 import numpy as np
-#from random import shuffle
+from random import shuffle
+#from past.builtins import xrange
 
 def softmax_loss_naive(W, X, y, reg):
   """
@@ -29,18 +30,23 @@ def softmax_loss_naive(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
-  N, C = X.shape[0], W.shape[1]
-  for i in range(N):
-      f = np.dot(X[i], W)
-      f -= np.max(f) # f.shape = C
-      loss = loss + np.log(np.sum(np.exp(f))) - f[y[i]]
-      dW[:, y[i]] -= X[i]
-      s = np.exp(f).sum()
-      for j in range(C):
-          dW[:, j] += np.exp(f[j]) / s * X[i]
-  loss = loss / N + 0.5 * reg * np.sum(W * W)
-  dW = dW / N + reg * W
+  num_train = X.shape[0]
+  num_classes = W.shape[1]
+  for i in range(num_train):
+        scores = np.dot(X[i], W)
+        #scores:(1,C)
+        correct_scores = scores[y[i]]
+        exp_sum = np.sum(np.exp(scores))
+        loss += np.log(exp_sum) - correct_scores
+        dW[:,y[i]] += -X[i]
+        
+        for j in range(num_classes):
+            dW[:,j] += (np.exp(scores[j]) / exp_sum) * X[i]
+  loss /= num_train
+  dW /= num_train
+  #增加正则项
+  loss += 0.5 * reg * np.sum(W * W)
+  dW += reg * W
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
@@ -64,19 +70,22 @@ def softmax_loss_vectorized(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
-  N = X.shape[0]
-  f = np.dot(X, W) # f.shape = N, C
-  f -= f.max(axis = 1).reshape(N, 1)
-  s = np.exp(f).sum(axis = 1)
-  loss = np.log(s).sum() - f[range(N), y].sum()
-
-  counts = np.exp(f) / s.reshape(N, 1)
-  counts[range(N), y] -= 1
-  dW = np.dot(X.T, counts)
-
-  loss = loss / N + 0.5 * reg * np.sum(W * W)
-  dW = dW / N + reg * W
+  scores = np.dot(X, W)
+  num_train = X.shape[0]
+  rows = range(num_train)
+  correct_class_score = scores[rows,y]
+  correct_class_score = np.reshape(correct_class_score,[num_train,1])
+  exp_sum = np.sum(np.exp(scores), axis = 1).reshape(num_train,1)
+  loss += np.sum(np.log(exp_sum) - correct_class_score)
+  p = np.exp(scores) / exp_sum
+  p[rows, y] += -1
+  dW = X.T.dot(p)
+  
+  loss /= num_train
+  dW /= num_train
+  #正则项
+  loss += 0.5 * reg * np.sum(W * W)
+  dW += reg * W
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################

@@ -1,6 +1,10 @@
+from __future__ import print_function
+
 import numpy as np
 from cs231n.classifiers.linear_svm import *
 from cs231n.classifiers.softmax import *
+from past.builtins import xrange
+
 
 class LinearClassifier(object):
 
@@ -11,7 +15,7 @@ class LinearClassifier(object):
             batch_size=200, verbose=False):
     """
     Train this linear classifier using stochastic gradient descent.
-
+    使用SGD训练线性分类器
     Inputs:
     - X: A numpy array of shape (N, D) containing training data; there are N
       training samples each of dimension D.
@@ -47,12 +51,12 @@ class LinearClassifier(object):
       # and y_batch should have shape (batch_size,)                           #
       #                                                                       #
       # Hint: Use np.random.choice to generate indices. Sampling with         #
-      # replacement is faster than sampling without replacement.              #
+      # replacement is faster than sampling without replacement.  
+      #有放回的抽样比无放回的抽样更快
       #########################################################################
-      pass
-      indices = np.random.choice(num_train, batch_size)
-      X_batch = X[indices]
-      y_batch = y[indices]
+      choice = np.random.choice(num_train, batch_size, replace=True)
+      X_batch = X[choice]
+      y_batch = y[choice]
       #########################################################################
       #                       END OF YOUR CODE                                #
       #########################################################################
@@ -66,7 +70,6 @@ class LinearClassifier(object):
       # TODO:                                                                 #
       # Update the weights using the gradient and the learning rate.          #
       #########################################################################
-      pass
       self.W -= learning_rate * grad
       #########################################################################
       #                       END OF YOUR CODE                                #
@@ -83,28 +86,29 @@ class LinearClassifier(object):
     data points.
 
     Inputs:
-    - X: D x N array of training data. Each column is a D-dimensional point.
+    - X: A numpy array of shape (N, D) containing training data; there are N
+      training samples each of dimension D.
 
     Returns:
     - y_pred: Predicted labels for the data in X. y_pred is a 1-dimensional
       array of length N, and each element is an integer giving the predicted
       class.
     """
-    y_pred = np.zeros(X.shape[1])
+    y_pred = np.zeros(X.shape[0])
     ###########################################################################
     # TODO:                                                                   #
     # Implement this method. Store the predicted labels in y_pred.            #
     ###########################################################################
-    pass
-    y_pred = np.argmax(np.dot(X, self.W), axis = 1)
+    scores = np.dot(X, self.W)
+    y_pred = np.argmax(scores, axis=1)
     ###########################################################################
     #                           END OF YOUR CODE                              #
     ###########################################################################
     return y_pred
-
+  
   def loss(self, X_batch, y_batch, reg):
     """
-    Compute the loss function and its derivative.
+    Compute the loss function and its derivative. 
     Subclasses will override this.
 
     Inputs:
