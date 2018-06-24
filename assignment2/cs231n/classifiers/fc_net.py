@@ -214,7 +214,7 @@ class FullyConnectedNet(object):
       self.bn_params = [{'mode': 'train'} for i in range(self.num_layers - 1)]
 
     # Cast all parameters to the correct datatype
-    for k, v in self.params.iteritems():
+    for k, v in self.params.items():
       self.params[k] = v.astype(dtype)
 
 
@@ -252,7 +252,7 @@ class FullyConnectedNet(object):
     hidden_layers, caches = range(self.num_layers + 1), range(self.num_layers)
     dp_caches = range(self.num_layers - 1)
     hidden_layers[0] = X
-    for i in range(self.num_layers):
+    for i in xrange(self.num_layers):
         W, b = self.params['W' + str(i+1)], self.params['b' + str(i+1)]
         if i == self.num_layers - 1:
             hidden_layers[i+1], caches[i] = affine_forward(hidden_layers[i], W, b)
