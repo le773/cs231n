@@ -79,7 +79,7 @@ class TwoLayerNet(object):
     # TODO: Implement the forward pass for the two-layer net, computing the    #
     # class scores for X and storing them in the scores variable.              #
     ############################################################################
-    pass
+    # pass
     W1, b1 = self.params['W1'], self.params['b1']
     W2, b2 = self.params['W2'], self.params['b2']
     hidden_layer, first_cache = affine_relu_forward(X, W1, b1)
@@ -103,7 +103,7 @@ class TwoLayerNet(object):
     # automated tests, make sure that your L2 regularization includes a factor #
     # of 0.5 to simplify the expression for the gradient.                      #
     ############################################################################
-    pass
+    # pass
     loss, dscores = softmax_loss(scores, y)
     dhidden, grads['W2'], grads['b2'] = affine_backward(dscores, second_cache)
     dX, grads['W1'], grads['b1'] = affine_relu_backward(dhidden, first_cache)
@@ -211,7 +211,7 @@ class FullyConnectedNet(object):
     # pass of the second batch normalization layer, etc.
     self.bn_params = []
     if self.use_batchnorm:
-      self.bn_params = [{'mode': 'train'} for i in range(self.num_layers - 1)]
+      self.bn_params = [{'mode': 'train'} for i in xrange(self.num_layers - 1)]
 
     # Cast all parameters to the correct datatype
     for k, v in self.params.items():
@@ -248,11 +248,13 @@ class FullyConnectedNet(object):
     # self.bn_params[1] to the forward pass for the second batch normalization #
     # layer, etc.                                                              #
     ############################################################################
-    pass
-    hidden_layers, caches = range(self.num_layers + 1), range(self.num_layers)
-    dp_caches = range(self.num_layers - 1)
+    # pass
+    hidden_layers, caches = list(range(self.num_layers + 1)), list(range(self.num_layers))
+    # print('2 self.num_layers:',self.num_layers)
+    dp_caches = list(range(self.num_layers - 1))
     hidden_layers[0] = X
-    for i in xrange(self.num_layers):
+    # print('2 self.num_layers:',self.num_layers)
+    for i in range(self.num_layers):
         W, b = self.params['W' + str(i+1)], self.params['b' + str(i+1)]
         if i == self.num_layers - 1:
             hidden_layers[i+1], caches[i] = affine_forward(hidden_layers[i], W, b)
@@ -288,9 +290,9 @@ class FullyConnectedNet(object):
     # automated tests, make sure that your L2 regularization includes a factor #
     # of 0.5 to simplify the expression for the gradient.                      #
     ############################################################################
-    pass
+    # pass
     loss, dscores = softmax_loss(scores, y)
-    dhiddens = range(self.num_layers + 1)
+    dhiddens = list(range(self.num_layers + 1))
     dhiddens[self.num_layers] = dscores
     for i in range(self.num_layers, 0, -1):
         if i == self.num_layers:

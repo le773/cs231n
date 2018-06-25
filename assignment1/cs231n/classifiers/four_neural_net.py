@@ -98,21 +98,25 @@ class FourLayerNet(object):
     # Store the result in the scores variable, which should be an array of      #
     # shape (N, C).                                                             #
     #############################################################################
+    # hiddlen1
     out1 = X.dot(W1) + b1
+    out1 = batchNormal(out1) # rm batch normal
     relu_tmp1 = np.maximum(0.01*out1, out1)
-#     U1 = (np.random.rand(*relu_tmp1.shape) < dropout)# / dropout # dropout: first dropout mask. Notice /p!
-#     relu_tmp1 *= U1 # dropout: drop!
-    relu_tmp1 = batchNormal(relu_tmp1) # rm batch normal
+    U1 = (np.random.rand(*relu_tmp1.shape) < dropout) / dropout # dropout: first dropout mask. Notice /p!
+    relu_tmp1 *= U1 # dropout: drop!
+
+    # hiddlen2
     scores_tmp1 = relu_tmp1.dot(D1) + e1
+    scores_tmp1 = batchNormal(scores_tmp1) # rm batch normal
     relu_tmp2 = np.maximum(0.01*scores_tmp1, scores_tmp1)
-    # relu_tmp2 = batchNormal(relu_tmp2) # rm batch normal
     # dropout:second dropout mask. Notice /p!
-    U2 = (np.random.rand(*relu_tmp2.shape) < dropout)/dropout 
+    U2 = (np.random.rand(*relu_tmp2.shape) < dropout)/dropout
     relu_tmp2 *= U2 # dropout: drop!
-    relu_tmp2 = batchNormal(relu_tmp2)
+
+    # hiddlen3
     scores_tmp2 = relu_tmp2.dot(D2) + e2
+    scores_tmp2 = batchNormal(scores_tmp2)
     relu_tmp3 = np.maximum(0.01*scores_tmp2, scores_tmp2)
-    relu_tmp3 = batchNormal(relu_tmp3) # rm batch normal
     scores = relu_tmp3.dot(W2) + b2
     #############################################################################
     #                              END OF YOUR CODE                             #
@@ -191,7 +195,10 @@ class FourLayerNet(object):
 
     # hiddlen1layer
     p1_tmp = p2_tmp.dot(D2.T)
-#     p1_tmp[relu_tmp2 <= 0.00001] = 0
+    # p1_tmp[relu_tmp2 <= 0.00001] = 0
+    # print("p1_tmp.shape：",p1_tmp.shape)
+    # print("U2.shape:",U2.shape)
+    p1_tmp = p1_tmp * U2
     p1_tmp = (relu_tmp2 > 0.01*relu_tmp2) * p1_tmp
     dD1 = relu_tmp1.T.dot(p1_tmp)
     dD1 += reg * D1
@@ -199,7 +206,10 @@ class FourLayerNet(object):
     grads['e1'] = np.sum(p1_tmp, axis = 0)
 
     p1 = p1_tmp.dot(D1.T)
-#     p1[relu_tmp1 <= 0.00001] = 0
+    # p1[relu_tmp1 <= 0.00001] = 0
+    # print("p1.shape：",p1.shape)
+    # print("U1.shape:",U1.shape)
+    p1 = p1 * U1
     p1 = (relu_tmp1 > 0.01*relu_tmp1) * p1
     dW1 = X.T.dot(p1)
     dW1 += reg * W1
@@ -208,7 +218,6 @@ class FourLayerNet(object):
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
-
     return loss, grads
 
   def train(self, X, y, X_val, y_val,
@@ -269,13 +278,13 @@ class FourLayerNet(object):
       loss, grads = self.loss(X_batch, y=y_batch, reg=reg)
       if loss - old_loss > 0.4 :
         print('loss ascend ++ old_loss：{}  loss:{}'.format(old_loss, loss))
-        break 
+        break
       if len(loss_history) > 101 and abs(loss - loss_history[-100]) < 0.1:
         print('loss descent too slow 100 loss ago：{}  loss:{}'.format(loss_history[-100], loss))
         break
       loss_history.append(loss)
 
-      if loss < 1.0:
+      if loss < 1.3:
         print('loss is enough, stop and validation')
         break
 
@@ -299,11 +308,12 @@ class FourLayerNet(object):
       if math.isnan(loss) or loss < 1e-5:
             print('loss miss')
             break
-      if verbose and it % 100 == 0:
-        print('iteration %d / %d: loss %f' % (it, num_iters, loss))
+      if verbose and it != 0 and (it+1) % 100 == 0:
+        print('iteration %d / %d: loss %f' % ((it+1), num_iters, loss))
 
       # Every epoch, check train and val accuracy and decay learning rate.
-      if it % iterations_per_epoch == 0:
+      # if it % iterations_per_epoch == 0:
+      if it % 100 == 0:
         # Check accuracy
         train_acc = (self.predict(X_batch) == y_batch).mean()
         val_acc = (self.predict(X_val) == y_val).mean()
@@ -343,10 +353,13 @@ class FourLayerNet(object):
     # TODO: Implement this function; it should be VERY simple!                #
     ###########################################################################
     out1_pred = X.dot(self.params['W1']) + self.params['b1']
+    out1_pred = batchNormal(out1_pred)
     out1_pred = np.maximum(0.1*out1_pred, out1_pred)
     out2_pred = out1_pred.dot(self.params['D1']) + self.params['e1']
+    out2_pred = batchNormal(out2_pred)
     out2_pred = np.maximum(0.1*out2_pred, out2_pred)
     out3_pred = out2_pred.dot(self.params['D2']) + self.params['e2']
+    out3_pred = batchNormal(out3_pred)
     out3_pred = np.maximum(0.1*out3_pred, out3_pred)
     scores_pred = out3_pred.dot(self.params['W2']) + self.params['b2']
     y_pred = np.argmax(scores_pred, axis = 1)
