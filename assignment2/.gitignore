@@ -1,5 +1,5 @@
 *.swp
 *.pyc
 .env/*
-./.ipynb_checkpoints
+.ipynb_checkpoints
 .ipynb_checkpoints/Dropout-checkpoint.ipynb

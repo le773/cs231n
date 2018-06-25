@@ -6,8 +6,9 @@ from past.builtins import xrange
 import math
 
 def batchNormal(X_input):
-    X_input -= np.mean(X_input, axis=0)
-    X_input /= (np.std(X_input, axis=0) + 1e-6)
+#     X_input -= np.mean(X_input, axis=0)
+#     X_input /= (np.std(X_input, axis=0) + 1e-6)
+    pass
     return X_input
 
 class FourLayerNet(object):

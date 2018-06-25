@@ -179,7 +179,7 @@ class FullyConnectedNet(object):
     pass
     self.params['W1'] = np.random.randn(input_dim, hidden_dims[0]) * weight_scale
     self.params['b1'] = np.zeros(hidden_dims[0])
-    for i in range(self.num_layers - 2):
+    for i in range(self.num_layers - 2):# between hidden layer
         self.params['W' + str(i+2)] = np.random.randn(hidden_dims[i], hidden_dims[i+1]) * weight_scale
         self.params['b' + str(i+2)] = np.zeros(hidden_dims[i+1])
         if self.use_batchnorm:
