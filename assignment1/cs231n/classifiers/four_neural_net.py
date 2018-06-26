@@ -118,6 +118,9 @@ class FourLayerNet(object):
     scores_tmp2 = relu_tmp2.dot(D2) + e2
     scores_tmp2 = batchNormal(scores_tmp2)
     relu_tmp3 = np.maximum(0.01*scores_tmp2, scores_tmp2)
+    # dropout:second dropout mask. Notice /p!
+    U3 = (np.random.rand(*relu_tmp3.shape) < dropout)/dropout
+    relu_tmp3 *= U3 # dropout: drop!
     scores = relu_tmp3.dot(W2) + b2
     #############################################################################
     #                              END OF YOUR CODE                             #
@@ -153,7 +156,7 @@ class FourLayerNet(object):
     # loss + reg
     loss = loss / N
     # regression1
-    loss += 0.5 * reg * np.sum(W1 * W1) + 0.5 * reg * np.sum(W2 * W2) +  0.5 * reg * np.sum(D1 * D1)
+    loss += 0.5 * reg * np.sum(W1 * W1) + 0.5 * reg * np.sum(W2 * W2) + 0.5 * reg * np.sum(D1 * D1) + 0.5 * reg * np.sum(D2 * D2)
     # regression2
     #############################################################################
     #                              END OF YOUR CODE                             #
@@ -179,14 +182,15 @@ class FourLayerNet(object):
     p2[np.arange(N), y] += -1
     p2 /= N  #(N, C)
 #     print('p2:', p2)
-    # hiddlen3 layer
+    # fc layer
     dW2 = relu_tmp3.T.dot(p2)
     dW2 += reg * W2
     grads['W2'] = dW2
     grads['b2'] = np.sum(p2, axis = 0)
 
-    # hiddlen2 layer
+    # hiddlen3 layer
     p2_tmp = p2.dot(W2.T)
+    p2_tmp = p2_tmp * U3
     p2_tmp = (relu_tmp3 > 0.01*relu_tmp3) * p2_tmp
 #     p2_tmp[relu_tmp3 <= 0.00001] = 0
     dD2 = relu_tmp2.T.dot(p2_tmp)
@@ -194,7 +198,7 @@ class FourLayerNet(object):
     grads['D2'] = dD2
     grads['e2'] = np.sum(p2_tmp, axis = 0)
 
-    # hiddlen1layer
+    # hidden2 layer
     p1_tmp = p2_tmp.dot(D2.T)
     # p1_tmp[relu_tmp2 <= 0.00001] = 0
     # print("p1_tmp.shape：",p1_tmp.shape)
@@ -206,6 +210,7 @@ class FourLayerNet(object):
     grads['D1'] = dD1
     grads['e1'] = np.sum(p1_tmp, axis = 0)
 
+    # hidden1 layer
     p1 = p1_tmp.dot(D1.T)
     # p1[relu_tmp1 <= 0.00001] = 0
     # print("p1.shape：",p1.shape)
@@ -224,7 +229,7 @@ class FourLayerNet(object):
   def train(self, X, y, X_val, y_val,
             learning_rate=1e-3, learning_rate_decay=0.95,
             reg=5e-1, num_iters=100,
-            batch_size=200, verbose=False):
+            batch_size=200, verbose=False, dropout=0.5):
     """
     Train this neural network using stochastic gradient descent.
 
@@ -276,7 +281,7 @@ class FourLayerNet(object):
 
       # Compute loss and gradients using the current minibatch
       old_loss = loss
-      loss, grads = self.loss(X_batch, y=y_batch, reg=reg)
+      loss, grads = self.loss(X_batch, y=y_batch, reg=reg, dropout=dropout)
       if loss - old_loss > 0.4 :
         print('loss ascend ++ old_loss：{}  loss:{}'.format(old_loss, loss))
         break

@@ -244,11 +244,11 @@ def batchnorm_backward(dout, cache):
   dx_4_b = dx_3_b * 1
   dx_5_b = np.ones_like(x) / N * dx_4_b
   dx_6_b = 2 * (x - sample_mean) * dx_5_b
-  dx_7_a = dx_6_b * 1 + dx_2_a * 1
+  dx_7_a = dx_6_b * 1 + dx_2_a * 1                          # step2
   dx_7_b = dx_6_b * 1 + dx_2_a * 1
   dx_8_b = -1 * np.sum(dx_7_b, axis=0)
   dx_9_b = np.ones_like(x) / N * dx_8_b
-  dx_10 = dx_9_b + dx_7_a
+  dx_10 = dx_9_b + dx_7_a                                   # step:0
 
   dx = dx_10
   dgamma = np.sum(dout * x_hat, axis = 0)
