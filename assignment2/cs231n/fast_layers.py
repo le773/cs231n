@@ -51,7 +51,7 @@ def conv_forward_strides(x, w, b, conv_param):
   # Pad the input
   p = pad
   x_padded = np.pad(x, ((0, 0), (0, 0), (p, p), (p, p)), mode='constant')
-  
+
   # Figure out output dimensions
   H += 2 * pad
   W += 2 * pad
@@ -62,8 +62,8 @@ def conv_forward_strides(x, w, b, conv_param):
   shape = (C, HH, WW, N, out_h, out_w)
   strides = (H * W, W, 1, C * H * W, stride * W, stride)
   strides = x.itemsize * np.array(strides)
-  x_stride = np.lib.stride_tricks.as_strided(x_padded,
-                shape=shape, strides=strides)
+  # print('x_padded：',x_padded)
+  x_stride = np.lib.stride_tricks.as_strided(x_padded, shape=shape, strides=strides)
   x_cols = np.ascontiguousarray(x_stride)
   x_cols.shape = (C * HH * WW, N * out_h * out_w)
 
@@ -81,7 +81,7 @@ def conv_forward_strides(x, w, b, conv_param):
 
   cache = (x, w, b, conv_param, x_cols)
   return out, cache
-  
+
 
 def conv_backward_strides(dout, cache):
   x, w, b, conv_param, x_cols = cache
@@ -182,8 +182,8 @@ def max_pool_forward_reshape(x, pool_param):
   assert pool_height == pool_width == stride, 'Invalid pool params'
   assert H % pool_height == 0
   assert W % pool_height == 0
-  x_reshaped = x.reshape(N, C, H / pool_height, pool_height,
-                         W / pool_width, pool_width)
+  x_reshaped = x.reshape(N, C, H // pool_height, pool_height,
+                         W // pool_width, pool_width)
   out = x_reshaped.max(axis=3).max(axis=4)
 
   cache = (x, x_reshaped, out)

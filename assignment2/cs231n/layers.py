@@ -416,8 +416,8 @@ def conv_forward_naive(x, w, b, conv_param):
   x_padded = np.pad(x, ((0,), (0,), (pad,), (pad,)), 'constant') # pad alongside four dimensions
   N, C, H, W = x.shape
   F, C, HH, WW = w.shape
-  output_height = 1 + (H + 2 * pad - HH) / stride
-  output_width = 1 + (W + 2 * pad - WW) / stride
+  output_height = 1 + (H + 2 * pad - HH) // stride
+  output_width = 1 + (W + 2 * pad - WW) // stride
   out = np.zeros((N, F, output_height, output_width))
 
   for i in range(output_height):
@@ -467,8 +467,8 @@ def conv_backward_naive(dout, cache):
   db = np.sum(dout, axis = (0,2,3))
 
   x_pad = np.pad(x, ((0,), (0,), (pad,), (pad,)), mode='constant', constant_values=0)
-  for i in range(H_out):
-      for j in range(W_out):
+  for i in range(int(H_out)):
+      for j in range(int(W_out)):
           x_pad_masked = x_pad[:, :, i*stride:i*stride+HH, j*stride:j*stride+WW]
           for k in range(F): #compute dw
               dw[k ,: ,: ,:] += np.sum(x_pad_masked * (dout[:, k, i, j])[:, None, None, None], axis=0)
@@ -506,8 +506,8 @@ def max_pool_forward_naive(x, pool_param):
   N, C, H, W = x.shape
   pool_height, pool_width = pool_param['pool_height'], pool_param['pool_width']
   stride = pool_param['stride']
-  out_height = H / pool_height
-  out_width = W / pool_width
+  out_height = H // pool_height
+  out_width = W // pool_width
   out = np.zeros((N, C, out_height, out_width))
   for i in range(out_height):
       for j in range(out_width):
@@ -540,8 +540,8 @@ def max_pool_backward_naive(dout, cache):
   pool_height, pool_width = pool_param['pool_height'], pool_param['pool_width']
   stride = pool_param['stride']
   dx = np.zeros_like(x)
-  out_height = H / pool_height
-  out_width = W / pool_width
+  out_height = H // pool_height
+  out_width = W // pool_width
   for i in range(out_height):
       for j in range(out_width):
           # x, dx has the same dimension, so does x_mask and dx_mask
