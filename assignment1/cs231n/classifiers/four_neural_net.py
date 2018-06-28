@@ -61,6 +61,15 @@ class FourLayerNet(object):
         self.params['e2'] = np.zeros(hidden_size3)
         self.params['W2'] = np.random.randn(hidden_size3, output_size)/np.sqrt(hidden_size3)
         self.params['b2'] = np.zeros(output_size)
+    if False:
+        self.params['W1'] = std * np.random.uniform(-0.1,0.1,input_size*hidden_size1).reshape(input_size, hidden_size1)
+        self.params['b1'] = np.zeros(hidden_size1)
+        self.params['D1'] = std * np.random.uniform(-0.1,0.1,hidden_size1*hidden_size2).reshape(hidden_size1, hidden_size2)
+        self.params['e1'] = np.zeros(hidden_size2)
+        self.params['D2'] = std * np.random.uniform(-0.1,0.1,hidden_size2*hidden_size3).reshape(hidden_size2, hidden_size3)
+        self.params['e2'] = np.zeros(hidden_size3)
+        self.params['W2'] = std * np.random.uniform(-0.1,0.1,hidden_size3*output_size).reshape(hidden_size3, output_size)
+        self.params['b2'] = np.zeros(output_size)
 
   def loss(self, X, y=None, reg=0.0, dropout=0.5):
     """
