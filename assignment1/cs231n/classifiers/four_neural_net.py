@@ -43,7 +43,7 @@ class FourLayerNet(object):
     - output_size: The number of classes C.
     """
     self.params = {}
-    if True:
+    if False:
         self.params['W1'] = std * np.random.randn(input_size, hidden_size1)
         self.params['b1'] = np.zeros(hidden_size1)
         self.params['D1'] = std * np.random.randn(hidden_size1, hidden_size2)
@@ -61,7 +61,7 @@ class FourLayerNet(object):
         self.params['e2'] = np.zeros(hidden_size3)
         self.params['W2'] = np.random.randn(hidden_size3, output_size)/np.sqrt(hidden_size3)
         self.params['b2'] = np.zeros(output_size)
-    if False:
+    if True:
         self.params['W1'] = std * np.random.uniform(-0.1,0.1,input_size*hidden_size1).reshape(input_size, hidden_size1)
         self.params['b1'] = np.zeros(hidden_size1)
         self.params['D1'] = std * np.random.uniform(-0.1,0.1,hidden_size1*hidden_size2).reshape(hidden_size1, hidden_size2)
@@ -367,13 +367,13 @@ class FourLayerNet(object):
     ###########################################################################
     # TODO: Implement this function; it should be VERY simple!                #
     ###########################################################################
-    out1_pred = X.dot(self.params['W1']) + self.params['b1']
+    out1_pred = X.dot(self.params['W1']) + self.params['b1'] # * dropout # 如果forward传播中，losss/dropout不存在
     out1_pred = batchNormal(out1_pred)
     out1_pred = np.maximum(0.1*out1_pred, out1_pred)
-    out2_pred = out1_pred.dot(self.params['D1']) + self.params['e1']
+    out2_pred = out1_pred.dot(self.params['D1']) + self.params['e1'] # * dropout # 如果forward传播中，losss/dropout不存在
     out2_pred = batchNormal(out2_pred)
     out2_pred = np.maximum(0.1*out2_pred, out2_pred)
-    out3_pred = out2_pred.dot(self.params['D2']) + self.params['e2']
+    out3_pred = out2_pred.dot(self.params['D2']) + self.params['e2'] # * dropout # 如果forward传播中，losss/dropout不存在
     out3_pred = batchNormal(out3_pred)
     out3_pred = np.maximum(0.1*out3_pred, out3_pred)
     scores_pred = out3_pred.dot(self.params['W2']) + self.params['b2']
