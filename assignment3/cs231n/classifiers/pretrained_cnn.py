@@ -45,7 +45,7 @@ class PretrainedCNN(object):
       if self.conv_params[i]['stride'] == 2: cur_size /= 2
 
     # Add a fully-connected layers
-    fan_in = cur_size * cur_size * self.num_filters[-1]
+    fan_in = int(cur_size * cur_size * self.num_filters[-1])
     self.params['W%d' % (i + 2)] = np.sqrt(2.0 / fan_in) * np.random.randn(fan_in, hidden_dim)
     self.params['b%d' % (i + 2)] = np.zeros(hidden_dim)
     self.params['gamma%d' % (i + 2)] = np.ones(hidden_dim)
@@ -54,7 +54,7 @@ class PretrainedCNN(object):
     self.params['W%d' % (i + 3)] = np.sqrt(2.0 / hidden_dim) * np.random.randn(hidden_dim, num_classes)
     self.params['b%d' % (i + 3)] = np.zeros(num_classes)
 
-    for k, v in self.params.iteritems():
+    for k, v in self.params.items():
       self.params[k] = v.astype(dtype)
 
     if h5_file is not None:
@@ -77,7 +77,7 @@ class PretrainedCNN(object):
     loss, grads = self.loss(x, y)
 
     with h5py.File(h5_file, 'r') as f:
-      for k, v in f.iteritems():
+      for k, v in f.items():
         v = np.asarray(v)
         if k in self.params:
           if verbose: print(k, v.shape, self.params[k].shape)
@@ -98,7 +98,7 @@ class PretrainedCNN(object):
           self.bn_params[i]['running_var'] = v.copy()
           if verbose: print(k, v.shape)
 
-    for k, v in self.params.iteritems():
+    for k, v in self.params.items():
       self.params[k] = v.astype(self.dtype)
 
 
@@ -138,7 +138,7 @@ class PretrainedCNN(object):
     layer_caches = []
 
     prev_a = X
-    for i in xrange(start, end + 1):
+    for i in range(start, end + 1):
       i1 = i + 1
       if 0 <= i < len(self.conv_params):
         # This is a conv layer

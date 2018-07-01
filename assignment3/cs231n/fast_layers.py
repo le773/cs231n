@@ -45,8 +45,8 @@ def conv_forward_strides(x, w, b, conv_param):
   stride, pad = conv_param['stride'], conv_param['pad']
 
   # Check dimensions
-  assert (W + 2 * pad - WW) % stride == 0, 'width does not work'
-  assert (H + 2 * pad - HH) % stride == 0, 'height does not work'
+  # assert (W + 2 * pad - WW) % stride == 0, 'width does not work'
+  # assert (H + 2 * pad - HH) % stride == 0, 'height does not work'
 
   # Pad the input
   p = pad

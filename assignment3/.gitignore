@@ -2,3 +2,5 @@
 *.pyc
 .env/*
 .ipynb_checkpoints/
+cs231n/datasets/pretrained_model.h5
+cs231n/im2col_cython.cp36-win_amd64.pyd
