@@ -1,0 +1,10 @@
+*.swp
+*.pyc
+.env/*
+.ipynb_checkpoints/
+littleCBIR.npz
+littleCBIR_48.npz
+littleCBIR_none.npz
+*.png
+*.jpg
+saved_models/
