@@ -26,7 +26,7 @@ class FourLayerNet(object):
   The outputs of the second fully-connected layer are the scores for each class.
   """
 
-  def __init__(self, input_size, hidden_size1, hidden_size2, hidden_size3, output_size, std=1e-4):
+  def __init__(self, input_size, hidden_size1, hidden_size2, hidden_size3, output_size, std=1e-2):
     """
     Initialize the model. Weights are initialized to small random values and
     biases are initialized to zero. Weights and biases are stored in the
@@ -43,6 +43,7 @@ class FourLayerNet(object):
     - output_size: The number of classes C.
     """
     self.params = {}
+    self.config = {}
     if False:
         self.params['W1'] = std * np.random.randn(input_size, hidden_size1)
         self.params['b1'] = np.zeros(hidden_size1)
@@ -71,7 +72,7 @@ class FourLayerNet(object):
         self.params['W2'] = std * np.random.uniform(-0.1,0.1,hidden_size3*output_size).reshape(hidden_size3, output_size)
         self.params['b2'] = np.zeros(output_size)
 
-  def loss(self, X, y=None, reg=0.0, dropout=0.5):
+  def loss(self, X, y=None, reg=0.0, dropout=0, use_batchnorm=False):
     """
     Compute the loss and gradients for a two layer fully connected neural
     network.
@@ -100,6 +101,7 @@ class FourLayerNet(object):
     D1, e1 = self.params['D1'], self.params['e1']
     D2, e2 = self.params['D2'], self.params['e2']
     N, D = X.shape
+    use_dropout = dropout > 0
 
     # Compute the forward pass
     scores = None
@@ -110,26 +112,37 @@ class FourLayerNet(object):
     #############################################################################
     # hiddlen1
     out1 = X.dot(W1) + b1
-    out1 = batchNormal(out1) # rm batch normal
-    relu_tmp1 = np.maximum(0.01*out1, out1)
-    U1 = (np.random.rand(*relu_tmp1.shape) < dropout) / dropout # dropout: first dropout mask. Notice /p!
-    relu_tmp1 *= U1 # dropout: drop!
+    if use_batchnorm:
+        out1 = batchNormal(out1)
+    relu_tmp1 = np.maximum(0, out1)
+
+    if use_dropout:
+        U1 = (np.random.rand(*relu_tmp1.shape) < dropout) / dropout # dropout: first dropout mask. Notice /p!
+        relu_tmp1 *= U1 # dropout: drop!
 
     # hiddlen2
     scores_tmp1 = relu_tmp1.dot(D1) + e1
-    scores_tmp1 = batchNormal(scores_tmp1) # rm batch normal
-    relu_tmp2 = np.maximum(0.01*scores_tmp1, scores_tmp1)
-    # dropout:second dropout mask. Notice /p!
-    U2 = (np.random.rand(*relu_tmp2.shape) < dropout)/dropout
-    relu_tmp2 *= U2 # dropout: drop!
+
+    if use_batchnorm:
+        scores_tmp1 = batchNormal(scores_tmp1)
+    relu_tmp2 = np.maximum(0, scores_tmp1)
+
+    if use_dropout:
+        # dropout:second dropout mask. Notice /p!
+        U2 = (np.random.rand(*relu_tmp2.shape) < dropout)/dropout
+        relu_tmp2 *= U2 # dropout: drop!
 
     # hiddlen3
     scores_tmp2 = relu_tmp2.dot(D2) + e2
-    scores_tmp2 = batchNormal(scores_tmp2)
-    relu_tmp3 = np.maximum(0.01*scores_tmp2, scores_tmp2)
-    # dropout:second dropout mask. Notice /p!
-    U3 = (np.random.rand(*relu_tmp3.shape) < dropout)/dropout
-    relu_tmp3 *= U3 # dropout: drop!
+
+    if use_batchnorm:
+        scores_tmp2 = batchNormal(scores_tmp2)
+    relu_tmp3 = np.maximum(0, scores_tmp2)
+
+    if use_dropout:
+        # dropout:second dropout mask. Notice /p!
+        U3 = (np.random.rand(*relu_tmp3.shape) < dropout)/dropout
+        relu_tmp3 *= U3 # dropout: drop!
     scores = relu_tmp3.dot(W2) + b2
     #############################################################################
     #                              END OF YOUR CODE                             #
@@ -190,8 +203,6 @@ class FourLayerNet(object):
     #############################################################################
     p2[np.arange(N), y] += -1
     p2 /= N  #(N, C)
-#     print('p2:', p2)
-    # fc layer
     dW2 = relu_tmp3.T.dot(p2)
     dW2 += reg * W2
     grads['W2'] = dW2
@@ -199,9 +210,11 @@ class FourLayerNet(object):
 
     # hiddlen3 layer
     p2_tmp = p2.dot(W2.T)
-    p2_tmp = p2_tmp * U3
-    p2_tmp = (relu_tmp3 > 0.01*relu_tmp3) * p2_tmp
-#     p2_tmp[relu_tmp3 <= 0.00001] = 0
+    if use_dropout:
+        p2_tmp = p2_tmp * U3
+    # relu back propagation
+    relu_mask3= scores_tmp2 > 0#.01 * scores_tmp2
+    p2_tmp = relu_mask3 * p2_tmp
     dD2 = relu_tmp2.T.dot(p2_tmp)
     dD2 += reg * D2
     grads['D2'] = dD2
@@ -209,11 +222,11 @@ class FourLayerNet(object):
 
     # hidden2 layer
     p1_tmp = p2_tmp.dot(D2.T)
-    # p1_tmp[relu_tmp2 <= 0.00001] = 0
-    # print("p1_tmp.shape：",p1_tmp.shape)
-    # print("U2.shape:",U2.shape)
-    p1_tmp = p1_tmp * U2
-    p1_tmp = (relu_tmp2 > 0.01*relu_tmp2) * p1_tmp
+    if use_dropout:
+        p1_tmp = p1_tmp * U2
+    # relu back propagation
+    relu_mask2= scores_tmp1 > 0#.01 * scores_tmp1
+    p1_tmp = relu_mask2 * p1_tmp
     dD1 = relu_tmp1.T.dot(p1_tmp)
     dD1 += reg * D1
     grads['D1'] = dD1
@@ -221,11 +234,11 @@ class FourLayerNet(object):
 
     # hidden1 layer
     p1 = p1_tmp.dot(D1.T)
-    # p1[relu_tmp1 <= 0.00001] = 0
-    # print("p1.shape：",p1.shape)
-    # print("U1.shape:",U1.shape)
-    p1 = p1 * U1
-    p1 = (relu_tmp1 > 0.01*relu_tmp1) * p1
+    if use_dropout:
+        p1 = p1 * U1
+    # relu back propagation
+    relu_mask1= out1 > 0#.01 * out1
+    p1 = relu_mask1 * p1
     dW1 = X.T.dot(p1)
     dW1 += reg * W1
     grads['W1'] = dW1
@@ -238,7 +251,7 @@ class FourLayerNet(object):
   def train(self, X, y, X_val, y_val,
             learning_rate=1e-3, learning_rate_decay=0.95,
             reg=5e-1, num_iters=100,
-            batch_size=200, verbose=False, dropout=0.5):
+            batch_size=200, verbose=False, dropout=0):
     """
     Train this neural network using stochastic gradient descent.
 
@@ -294,7 +307,7 @@ class FourLayerNet(object):
       if loss - old_loss > 0.4 :
         print('loss ascend ++ old_loss：{}  loss:{}'.format(old_loss, loss))
         break
-      if len(loss_history) > 101 and abs(loss - loss_history[-100]) < 0.1:
+      if len(loss_history) > 101 and abs(loss - loss_history[-100]) < 1e-6:
         print('loss descent too slow 100 loss ago：{}  loss:{}'.format(loss_history[-100], loss))
         break
       loss_history.append(loss)
@@ -309,14 +322,49 @@ class FourLayerNet(object):
       # using stochastic gradient descent. You'll need to use the gradients   #
       # stored in the grads dictionary defined above.                         #
       #########################################################################
-      self.params['W1'] -= learning_rate * grads['W1']
-      self.params['b1'] -= learning_rate * grads['b1']
-      self.params['W2'] -= learning_rate * grads['W2']
-      self.params['b2'] -= learning_rate * grads['b2']
-      self.params['D1'] -= learning_rate * grads['D1']
-      self.params['e1'] -= learning_rate * grads['e1']
-      self.params['D2'] -= learning_rate * grads['D2']
-      self.params['e2'] -= learning_rate * grads['e2']
+      if self.config is None: self.config = {}
+      self.config.setdefault('momentum', 0.9)
+      vW1 = self.config.get('vW1', np.zeros_like(self.params['W1']))
+      vb1 = self.config.get('vb1', np.zeros_like(self.params['b1']))
+      vD1 = self.config.get('vD1', np.zeros_like(self.params['D1']))
+      ve1 = self.config.get('ve1', np.zeros_like(self.params['e1']))
+      vD2 = self.config.get('vD2', np.zeros_like(self.params['D2']))
+      ve2 = self.config.get('ve2', np.zeros_like(self.params['e2']))
+      vW2 = self.config.get('vW2', np.zeros_like(self.params['W2']))
+      vb2 = self.config.get('vb2', np.zeros_like(self.params['b2']))
+      vW1 = self.config['momentum'] * vW1 - learning_rate * grads['W1']
+      vb1 = self.config['momentum'] * vb1 - learning_rate * grads['b1']
+      vD1 = self.config['momentum'] * vD1 - learning_rate * grads['D1']
+      ve1 = self.config['momentum'] * ve1 - learning_rate * grads['e1']
+      vD2 = self.config['momentum'] * vD2 - learning_rate * grads['D2']
+      ve2 = self.config['momentum'] * ve2 - learning_rate * grads['e2']
+      vW2 = self.config['momentum'] * vW2 - learning_rate * grads['W2']
+      vb2 = self.config['momentum'] * vb2 - learning_rate * grads['b2']
+      self.params['W1'] = self.params['W1'] + vW1
+      self.params['b1'] = self.params['b1'] + vb1
+      self.params['D1'] = self.params['D1'] + vD1
+      self.params['e1'] = self.params['e1'] + ve1
+      self.params['D2'] = self.params['D2'] + vD2
+      self.params['e2'] = self.params['e2'] + ve2
+      self.params['W2'] = self.params['W2'] + vW2
+      self.params['b2'] = self.params['b2'] + vb2
+      self.config['vW1'] = vW1
+      self.config['vb1'] = vb1
+      self.config['vD1'] = vD1
+      self.config['ve1'] = ve1
+      self.config['vD2'] = vD2
+      self.config['ve2'] = ve2
+      self.config['vW2'] = vW2
+      self.config['vb2'] = vb2
+      if False:
+        self.params['W1'] -= learning_rate * grads['W1']
+        self.params['b1'] -= learning_rate * grads['b1']
+        self.params['W2'] -= learning_rate * grads['W2']
+        self.params['b2'] -= learning_rate * grads['b2']
+        self.params['D1'] -= learning_rate * grads['D1']
+        self.params['e1'] -= learning_rate * grads['e1']
+        self.params['D2'] -= learning_rate * grads['D2']
+        self.params['e2'] -= learning_rate * grads['e2']
       #########################################################################
       #                             END OF YOUR CODE                          #
       #########################################################################
@@ -347,7 +395,11 @@ class FourLayerNet(object):
       'val_acc_history': val_acc_history,
     }
 
-  def predict(self, X):
+  def momentum_sgd(w, dw, config=None):
+    pass
+
+
+  def predict(self, X, use_batchnorm=False):
     """
     Use the trained weights of this two-layer network to predict labels for
     data points. For each data point we predict scores for each of the C
@@ -368,14 +420,17 @@ class FourLayerNet(object):
     # TODO: Implement this function; it should be VERY simple!                #
     ###########################################################################
     out1_pred = X.dot(self.params['W1']) + self.params['b1'] # * dropout # 如果forward传播中，losss/dropout不存在
-    out1_pred = batchNormal(out1_pred)
-    out1_pred = np.maximum(0.1*out1_pred, out1_pred)
+    if use_batchnorm:
+        out1_pred = batchNormal(out1_pred)
+    out1_pred = np.maximum(0.01*out1_pred, out1_pred)
     out2_pred = out1_pred.dot(self.params['D1']) + self.params['e1'] # * dropout # 如果forward传播中，losss/dropout不存在
-    out2_pred = batchNormal(out2_pred)
-    out2_pred = np.maximum(0.1*out2_pred, out2_pred)
+    if use_batchnorm:
+        out2_pred = batchNormal(out2_pred)
+    out2_pred = np.maximum(0.01*out2_pred, out2_pred)
     out3_pred = out2_pred.dot(self.params['D2']) + self.params['e2'] # * dropout # 如果forward传播中，losss/dropout不存在
-    out3_pred = batchNormal(out3_pred)
-    out3_pred = np.maximum(0.1*out3_pred, out3_pred)
+    if use_batchnorm:
+        out3_pred = batchNormal(out3_pred)
+    out3_pred = np.maximum(0.01*out3_pred, out3_pred)
     scores_pred = out3_pred.dot(self.params['W2']) + self.params['b2']
     y_pred = np.argmax(scores_pred, axis = 1)
     ###########################################################################
