@@ -4,3 +4,10 @@
 .ipynb_checkpoints/
 cs231n/datasets/pretrained_model.h5
 cs231n/im2col_cython.cp36-win_amd64.pyd
+example_styletransfer.png
+gan-checks-tf.npz
+gan_outputs_pytorch.png
+gan_outputs_tf.png
+style-transfer-checks-tf.npz
+style-transfer-checks.npz
+styles/
