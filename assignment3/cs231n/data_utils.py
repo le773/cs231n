@@ -3,16 +3,22 @@ import numpy as np
 import os
 from scipy.misc import imread
 
+def load_pickle(f):
+    version = platform.python_version_tuple()
+    if version[0] == '2':
+        return  pickle.load(f)
+    elif version[0] == '3':
+        return  pickle.load(f, encoding='latin1')
+    raise ValueError("invalid python version: {}".format(version))
 def load_CIFAR_batch(filename):
-  """ load single batch of cifar """
-  with open(filename, 'rb') as f:
-    datadict = pickle.load(f,encoding='bytes')
-    print(datadict.keys())
-    X = datadict[b'data']
-    Y = datadict[b'labels']
-    X = X.reshape(10000, 3, 32, 32).transpose(0,2,3,1).astype("float")
-    Y = np.array(Y)
-    return X, Y
+    """ load single batch of cifar """
+    with open(filename, 'rb') as f:
+        datadict = load_pickle(f)
+        X = datadict['data']
+        Y = datadict['labels']
+        X = X.reshape(10000, 3, 32, 32).transpose(0,2,3,1).astype("float")
+        Y = np.array(Y)
+        return X, Y
 
 def load_CIFAR10(ROOT):
   """ load all of cifar """
@@ -42,13 +48,13 @@ def get_CIFAR10_data(num_training=49000, num_validation=1000, num_test=1000,
     X_train, y_train, X_test, y_test = load_CIFAR10(cifar10_dir)
 
     # Subsample the data
-    mask = range(num_training, num_training + num_validation)
+    mask = list(range(num_training, num_training + num_validation))
     X_val = X_train[mask]
     y_val = y_train[mask]
-    mask = range(num_training)
+    mask = list(range(num_training))
     X_train = X_train[mask]
     y_train = y_train[mask]
-    mask = range(num_test)
+    mask = list(range(num_test))
     X_test = X_test[mask]
     y_test = y_test[mask]
 
@@ -214,7 +220,33 @@ def load_models(models_dir):
   for model_file in os.listdir(models_dir):
     with open(os.path.join(models_dir, model_file), 'rb') as f:
       try:
-        models[model_file] = pickle.load(f)['model']
+                models[model_file] = load_pickle(f)['model']
       except pickle.UnpicklingError:
         continue
   return models
+def load_imagenet_val(num=None):
+    """Load a handful of validation images from ImageNet.
+
+    Inputs:
+    - num: Number of images to load (max of 25)
+
+    Returns:
+    - X: numpy array with shape [num, 224, 224, 3]
+    - y: numpy array of integer image labels, shape [num]
+    - class_names: dict mapping integer label to class name
+    """
+    imagenet_fn = 'cs231n/datasets/imagenet_val_25.npz'
+    if not os.path.isfile(imagenet_fn):
+      print('file %s not found' % imagenet_fn)
+      print('Run the following:')
+      print('cd cs231n/datasets')
+      print('bash get_imagenet_val.sh')
+      assert False, 'Need to download imagenet_val_25.npz'
+    f = np.load(imagenet_fn)
+    X = f['X']
+    y = f['y']
+    class_names = f['label_map'].item()
+    if num is not None:
+        X = X[:num]
+        y = y[:num]
+    return X, y, class_names

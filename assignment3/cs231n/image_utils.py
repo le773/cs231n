@@ -1,5 +1,6 @@
 import os, tempfile
 import urllib.request
+import urllib.request, urllib.error, urllib.parse, os, tempfile
 
 import numpy as np
 from scipy.misc import imread
@@ -32,7 +33,9 @@ def blur_image(X):
   return conv_forward_fast(X, w_blur, b_blur, blur_param)[0]
 
 
-def preprocess_image(img, mean_img, mean='image'):
+SQUEEZENET_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
+SQUEEZENET_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+def preprocess_image(img, mean_img=None, mean='image'):
   """
   Convert to float, transepose, and subtract mean pixel
 
@@ -42,6 +45,8 @@ def preprocess_image(img, mean_img, mean='image'):
   Returns:
   - (1, 3, H, 3)
   """
+  if mean_img is None:
+    return (img.astype(np.float32)/255.0 - SQUEEZENET_MEAN) / SQUEEZENET_STD
   if mean == 'image':
     mean = mean_img
   elif mean == 'pixel':
@@ -53,7 +58,7 @@ def preprocess_image(img, mean_img, mean='image'):
   return img.astype(np.float32).transpose(2, 0, 1)[None] - mean
 
 
-def deprocess_image(img, mean_img, mean='image', renorm=False):
+def deprocess_image(img, mean_img=None, mean='image', renorm=False):
   """
   Add mean pixel, transpose, and convert to uint8
 
@@ -79,21 +84,45 @@ def deprocess_image(img, mean_img, mean='image', renorm=False):
     img = 255.0 * (img - low) / (high - low)
   return img.astype(np.uint8)
 
+def deprocess_image2018(img, rescale=False):
+    """Undo preprocessing on an image and convert back to uint8."""
+    img = (img * SQUEEZENET_STD + SQUEEZENET_MEAN)
+    if rescale:
+        vmin, vmax = img.min(), img.max()
+        img = (img - vmin) / (vmax - vmin)
+    return np.clip(255 * img, 0.0, 255.0).astype(np.uint8)
 
 def image_from_url(url):
-  """
-  Read an image from a URL. Returns a numpy array with the pixel data.
-  We write the image to a temporary file then read it back. Kinda gross.
-  """
-  try:
-    f = urllib.request.urlopen(url)
-    _, fname = tempfile.mkstemp()
-    with open(fname, 'wb') as ff:
-      ff.write(f.read())
-    img = imread(fname)
-    os.remove(fname)
+    """
+    Read an image from a URL. Returns a numpy array with the pixel data.
+    We write the image to a temporary file then read it back. Kinda gross.
+    """
+    try:
+        f = urllib.request.urlopen(url)
+        _, fname = tempfile.mkstemp()
+        with open(fname, 'wb') as ff:
+            ff.write(f.read())
+        img = imread(fname)
+        os.remove(fname)
+        return img
+    except urllib.error.URLError as e:
+        print('URL Error: ', e.reason, url)
+    except urllib.error.HTTPError as e:
+        print('HTTP Error: ', e.code, url)
+
+
+def load_image(filename, size=None):
+    """Load and resize an image from disk.
+
+    Inputs:
+    - filename: path to file
+    - size: size of shortest dimension after rescaling
+    """
+    img = imread(filename)
+    if size is not None:
+        orig_shape = np.array(img.shape[:2])
+        min_idx = np.argmin(orig_shape)
+        scale_factor = float(size) / orig_shape[min_idx]
+        new_shape = (orig_shape * scale_factor).astype(int)
+        img = imresize(img, scale_factor)
     return img
-  except urllib2.URLError as e:
-    print('URL Error: ', e.reason, url)
-  except urllib2.HTTPError as e:
-    print('HTTP Error: ', e.code, url)
