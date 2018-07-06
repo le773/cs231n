@@ -10,7 +10,7 @@ def load_coco_data(base_dir=BASE_DIR,
   data = {}
   caption_file = os.path.join(base_dir, 'coco2014_captions.h5')
   with h5py.File(caption_file, 'r') as f:
-        for k, v in f.items():
+    for k, v in f.items():
       data[k] = np.asarray(v)
 
   if pca_features:
@@ -30,7 +30,7 @@ def load_coco_data(base_dir=BASE_DIR,
   dict_file = os.path.join(base_dir, 'coco2014_vocab.json')
   with open(dict_file, 'r') as f:
     dict_data = json.load(f)
-    for k, v in dict_data.iteritems():
+    for k, v in dict_data.items():
       data[k] = v
 
   train_url_file = os.path.join(base_dir, 'train2014_urls.txt')
@@ -82,4 +82,3 @@ def sample_coco_minibatch(data, batch_size=100, split='train'):
   image_features = data['%s_features' % split][image_idxs]
   urls = data['%s_urls' % split][image_idxs]
   return captions, image_features, urls
-
