@@ -2,3 +2,9 @@ cifar-10-batches-py/*
 tiny-imagenet-100-A*
 tiny-imagenet-100-B*
 tiny-100-A-pretrained/*
+coco_captioning.zip
+coco_captioning/
+squeezenet.ckpt.data-00000-of-00001
+squeezenet.ckpt.index
+squeezenet.ckpt.meta
+squeezenet_tf.zip

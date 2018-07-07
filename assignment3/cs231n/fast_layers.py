@@ -235,8 +235,8 @@ def max_pool_forward_im2col(x, pool_param):
   assert (H - pool_height) % stride == 0, 'Invalid height'
   assert (W - pool_width) % stride == 0, 'Invalid width'
 
-  out_height = (H - pool_height) / stride + 1
-  out_width = (W - pool_width) / stride + 1
+  out_height = (H - pool_height) // stride + 1
+  out_width = (W - pool_width) // stride + 1
 
   x_split = x.reshape(N * C, 1, H, W)
   x_cols = im2col(x_split, pool_height, pool_width, padding=0, stride=stride)
